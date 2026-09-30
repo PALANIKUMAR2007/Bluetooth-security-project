@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Bluetooth Devices | Security Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pb-3 mb-4 border-bottom border-secondary-subtle gap-3">
+    <div>
+        <h4 class="text-white fw-bold mb-1">Discovered Bluetooth Targets</h4>
+        <p class="text-muted small mb-0">Authorized spectrum inventory for non-destructive security auditing.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-cyber-primary" id="btnStartScan" onclick="triggerBluetoothScan(false)">
+            <i class="bi bi-broadcast me-2"></i>Run Discovery Scan
+        </button>
+        <button class="btn btn-cyber-outline" onclick="triggerBluetoothScan(true)">
+            <i class="bi bi-magic me-1"></i>Load Demo Devices
+        </button>
+    </div>
+</div>
+
+<!-- Adapter Status Banner -->
+<div class="alert alert-dark border-secondary-subtle py-2 px-3 mb-4 d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-2 small">
+        <span class="badge {% if adapter_available %}bg-success{% else %}bg-info text-dark{% endif %} font-monospace">
+            {% if adapter_available %}HARDWARE READY{% else %}DEMO FALLBACK READY{% endif %}
+        </span>
+        <span class="text-light">{{ adapter_msg }}</span>
+    </div>
+    <span class="badge bg-secondary font-monospace d-none d-md-inline">TOTAL TARGETS: {{ devices|length }}</span>
+</div>
+
+<!-- Devices Table Card -->
+<div class="cyber-card">
+    <div class="cyber-card-header">
+        <div class="text-white fw-semibold small font-monospace">
+            <i class="bi bi-hdd-network-fill text-info me-2"></i>SPECTRUM DEVICE INVENTORY
+        </div>
+    </div>
+    <div class="cyber-card-body p-0">
+        <div class="table-responsive">
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th>Device Name</th>
+                        <th>Address (MAC)</th>
+                        <th>Device Type</th>
+                        <th>Environment</th>
+                        <th>Status</th>
+                        <th>Risk Score</th>
+                        <th>Last Scanned</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if devices %}
+                        {% for dev in devices %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('bluetooth.device_details', device_id=dev.id) }}" class="text-white fw-bold text-decoration-none">
+                                    {{ dev.name }}
+                                </a>
+                                <div class="text-muted small">{{ dev.vendor }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-dark font-monospace text-info border border-secondary">{{ dev.mac_address }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-light">{{ dev.device_type }}</span>
+                            </td>
+                            <td>
+                                {% if dev.is_demo %}
+                                    <span class="badge bg-info text-dark font-monospace">DEMO DATA</span>
+                                {% else %}
+                                    <span class="badge bg-primary font-monospace">LIVE BLE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-dark border border-secondary">{{ dev.status }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {{ dev.risk_badge_class }}">{{ dev.current_risk_score|round(1) }}%</span>
+                                <div class="small text-muted">{{ dev.risk_level }}</div>
+                            </td>
+                            <td class="font-monospace small text-muted">
+                                {{ dev.last_seen.strftime('%Y-%m-%d %H:%M') if dev.last_seen else 'N/A' }}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('bluetooth.device_details', device_id=dev.id) }}" class="btn btn-sm btn-cyber-outline">
+                                        <i class="bi bi-eye me-1"></i> Details
+                                    </a>
+                                    <button class="btn btn-sm btn-cyber-primary" id="audit-btn-{{ dev.id }}" onclick="runDeviceSecurityScan({{ dev.id }})">
+                                        <i class="bi bi-shield-check me-1"></i> Security Scan
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-broadcast fs-2 mb-2 d-block text-secondary"></i>
+                                No Bluetooth devices recorded. Click <b>"Run Discovery Scan"</b> or <b>"Load Demo Devices"</b> to populate.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

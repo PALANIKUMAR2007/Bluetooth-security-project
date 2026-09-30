@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Exploitation Simulator | Bluetooth Security Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pb-3 mb-4 border-bottom border-secondary-subtle gap-3">
+    <div>
+        <h4 class="text-white fw-bold mb-1">Controlled Exploitation Simulator</h4>
+        <p class="text-muted small mb-0">Safe educational sandbox demonstrating Bluetooth attack surfaces and defense mechanisms.</p>
+    </div>
+</div>
+
+<!-- Prominent Mandatory Simulation Only Banner -->
+<div class="sim-alert-banner mb-4">
+    <i class="bi bi-shield-exclamation fs-3 text-danger"></i>
+    <div>
+        <div class="text-white fw-bold">SAFETY COMPLIANCE: SIMULATION ONLY — CONTROLLED EDUCATIONAL DEMONSTRATION</div>
+        <div class="small">
+            This module generates simulated vulnerability timelines and defensive control responses. 
+            No unauthorized packets, brute force attacks, or malicious payloads are transmitted to any real radio devices.
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Scenario Configuration Workbench -->
+    <div class="col-lg-4">
+        <div class="cyber-card mb-4">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-sliders text-info me-2"></i>SIMULATION PARAMETERS
+                </div>
+            </div>
+            <div class="cyber-card-body">
+                <form id="simulationForm">
+                    <div class="mb-3">
+                        <label class="form-label text-light small">Target Bluetooth Device</label>
+                        <select class="form-select cyber-input" id="selectDevice" required>
+                            <option value="">-- Choose Target Endpoint --</option>
+                            {% for dev in devices %}
+                                <option value="{{ dev.id }}" {% if selected_device_id == dev.id %}selected{% endif %}>
+                                    {{ dev.name }} ({{ dev.mac_address }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-light small">Select Educational Scenario</label>
+                        <select class="form-select cyber-input" id="selectScenario" required>
+                            <option value="">-- Choose Simulation Scenario --</option>
+                            {% for sc in scenarios %}
+                                <option value="{{ sc.id }}">{{ sc.title }} ({{ sc.severity }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-cyber-primary w-100 py-2" id="btnRunSimulation">
+                        <i class="bi bi-play-circle me-2"></i>Launch Simulation
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Scenario Explanatory Cards -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-journal-code text-info me-2"></i>SCENARIO DESCRIPTIONS
+                </div>
+            </div>
+            <div class="cyber-card-body p-0">
+                <div class="list-group list-group-flush bg-transparent">
+                    {% for sc in scenarios %}
+                    <div class="list-group-item bg-transparent border-secondary-subtle py-2 px-3">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="text-info fw-semibold small">{{ sc.title }}</span>
+                            <span class="badge {% if sc.severity == 'CRITICAL' %}bg-danger{% elif sc.severity == 'HIGH' %}bg-warning text-dark{% else %}bg-success{% endif %} font-monospace" style="font-size: 0.65rem;">
+                                {{ sc.severity }}
+                            </span>
+                        </div>
+                        <p class="text-muted mb-0" style="font-size: 0.78rem;">{{ sc.description }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Interactive 6-Step Simulation Timeline Display -->
+    <div class="col-lg-8">
+        <div class="cyber-card">
+            <div class="cyber-card-header d-flex align-items-center justify-content-between">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-terminal-fill text-info me-2"></i>SIMULATED EXECUTION TIMELINE (6 STEPS)
+                </div>
+                <span class="badge bg-danger text-white font-monospace">SIMULATION ONLY</span>
+            </div>
+            <div class="cyber-card-body" id="timelineContainer">
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-cpu fs-1 mb-3 d-block text-secondary"></i>
+                    <h6 class="text-light">No Active Simulation Running</h6>
+                    <p class="small text-muted mb-0">Select a target device and scenario on the left, then click <b>"Launch Simulation"</b>.</p>
+                </div>
+            </div>
+            <!-- Dynamic Outcome Alert Banner -->
+            <div class="cyber-card-body border-top border-secondary-subtle d-none" id="outcomeAlert"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/simulation.js') }}"></script>
+{% endblock %}

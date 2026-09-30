@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Bluetooth Security Assessment{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pb-3 mb-4 border-bottom border-secondary-subtle gap-3">
+    <div>
+        <h4 class="text-white fw-bold mb-1">Cybersecurity Operations Center</h4>
+        <p class="text-muted small mb-0">Real-time spectrum visibility, risk categorization & defensive posture tracking.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-cyber-primary" id="btnStartScan" onclick="triggerBluetoothScan(false)">
+            <i class="bi bi-broadcast me-2"></i>Discover Devices
+        </button>
+        <button class="btn btn-cyber-outline" onclick="triggerBluetoothScan(true)">
+            <i class="bi bi-magic me-1"></i>Demo Mode
+        </button>
+    </div>
+</div>
+
+<!-- Prominent Demo Mode Environment Banner -->
+<div class="alert alert-dark border-info-subtle d-flex align-items-center justify-content-between py-2 px-3 mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-info text-dark font-monospace">DEMO ENVIRONMENT</span>
+        <span class="small text-light">Non-destructive testbed active. Realistic sample telemetry enabled for Bluetooth evaluation.</span>
+    </div>
+    <span class="text-muted small font-monospace d-none d-md-inline">SAFETY: SIMULATION ONLY</span>
+</div>
+
+<!-- 5 Top Key Metric Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+        <div class="cyber-card stat-card">
+            <div class="stat-icon-wrapper stat-icon-cyan">
+                <i class="bi bi-hdd-network"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_devices }}</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl">
+        <div class="cyber-card stat-card">
+            <div class="stat-icon-wrapper stat-icon-cyan">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_scans }}</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl">
+        <div class="cyber-card stat-card">
+            <div class="stat-icon-wrapper stat-icon-emerald">
+                <i class="bi bi-shield-shaded"></i>
+            </div>
+            <div>
+                <div class="stat-value text-success">{{ secure_devices }}</div>
+                <div class="stat-label">Secure Devices</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl">
+        <div class="cyber-card stat-card">
+            <div class="stat-icon-wrapper stat-icon-amber">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div class="stat-value text-warning">{{ high_risk_devices }}</div>
+                <div class="stat-label">High Risk Targets</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl">
+        <div class="cyber-card stat-card">
+            <div class="stat-icon-wrapper stat-icon-rose">
+                <i class="bi bi-bug-fill"></i>
+            </div>
+            <div>
+                <div class="stat-value text-danger">{{ critical_findings }}</div>
+                <div class="stat-label">Critical Findings</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Visualizations Row -->
+<div class="row g-3 mb-4">
+    <!-- Severity Doughnut Chart -->
+    <div class="col-lg-5">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-pie-chart-fill text-info me-2"></i>VULNERABILITY SEVERITY DISTRIBUTION
+                </div>
+            </div>
+            <div class="cyber-card-body d-flex flex-column justify-content-center" style="height: 290px;">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Risk Posture Bar Chart -->
+    <div class="col-lg-7">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-bar-chart-line-fill text-info me-2"></i>DEVICE RISK PROFILE OVERVIEW
+                </div>
+            </div>
+            <div class="cyber-card-body" style="height: 290px;">
+                <canvas id="deviceRiskChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Scans and Target Devices Row -->
+<div class="row g-3">
+    <!-- Recent Scan History -->
+    <div class="col-lg-7">
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-clock-history text-info me-2"></i>RECENT SCAN AUDIT LOGS
+                </div>
+                <a href="{{ url_for('bluetooth.devices') }}" class="btn btn-sm btn-cyber-outline">View All Devices</a>
+            </div>
+            <div class="cyber-card-body p-0">
+                <div class="table-responsive">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>Scan Timestamp</th>
+                                <th>Target Device</th>
+                                <th>Assessment Type</th>
+                                <th>Score</th>
+                                <th>Findings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_scans %}
+                                {% for s in recent_scans %}
+                                <tr>
+                                    <td class="font-monospace small text-muted">{{ s.scan_timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('bluetooth.device_details', device_id=s.device.id) }}" class="text-info text-decoration-none fw-medium">
+                                            {{ s.device.name }}
+                                        </a>
+                                    </td>
+                                    <td><span class="badge bg-dark border border-secondary text-light">{{ s.scan_type }}</span></td>
+                                    <td>
+                                        <span class="badge {{ s.device.risk_badge_class }}">{{ s.risk_score|round(1) }}%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ s.findings|length }} items</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No security scans executed yet. Click "Discover Devices" above.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Discovered Targets -->
+    <div class="col-lg-5">
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-broadcast-pin text-info me-2"></i>LATEST TARGET DISCOVERIES
+                </div>
+            </div>
+            <div class="cyber-card-body p-0">
+                <div class="list-group list-group-flush bg-transparent">
+                    {% if recent_devices %}
+                        {% for dev in recent_devices %}
+                        <div class="list-group-item bg-transparent border-secondary-subtle py-3 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <a href="{{ url_for('bluetooth.device_details', device_id=dev.id) }}" class="text-white fw-bold text-decoration-none">
+                                    {{ dev.name }}
+                                </a>
+                                <span class="badge {{ dev.risk_badge_class }}">{{ dev.current_risk_score|round(1) }}%</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between small text-muted">
+                                <span class="font-monospace">{{ dev.mac_address }}</span>
+                                <span>{{ dev.device_type }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-muted">No devices recorded.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Pass chart data from server to client
+    window.severityChartData = {{ severity_chart_data | tojson }};
+    window.deviceRiskChartData = {{ device_risk_chart_data | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

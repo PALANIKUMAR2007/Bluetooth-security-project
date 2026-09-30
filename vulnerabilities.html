@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Vulnerability Assessment | Security Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pb-3 mb-4 border-bottom border-secondary-subtle gap-3">
+    <div>
+        <h4 class="text-white fw-bold mb-1">Vulnerability Assessment Register</h4>
+        <p class="text-muted small mb-0">Consolidated findings across all audited Bluetooth endpoints.</p>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <a href="{{ url_for('vulnerabilities.index') }}" class="btn btn-sm {% if active_filter == 'ALL' %}btn-cyber-primary{% else %}btn-cyber-outline{% endif %}">
+        All Findings <span class="badge bg-secondary ms-1">{{ counts.ALL }}</span>
+    </a>
+    <a href="{{ url_for('vulnerabilities.index', severity='CRITICAL') }}" class="btn btn-sm {% if active_filter == 'CRITICAL' %}btn-danger{% else %}btn-cyber-outline text-danger border-danger{% endif %}">
+        Critical <span class="badge bg-dark ms-1">{{ counts.CRITICAL }}</span>
+    </a>
+    <a href="{{ url_for('vulnerabilities.index', severity='HIGH') }}" class="btn btn-sm {% if active_filter == 'HIGH' %}btn-warning text-dark{% else %}btn-cyber-outline text-warning border-warning{% endif %}">
+        High <span class="badge bg-dark ms-1">{{ counts.HIGH }}</span>
+    </a>
+    <a href="{{ url_for('vulnerabilities.index', severity='MEDIUM') }}" class="btn btn-sm {% if active_filter == 'MEDIUM' %}btn-info text-dark{% else %}btn-cyber-outline text-info border-info{% endif %}">
+        Medium <span class="badge bg-dark ms-1">{{ counts.MEDIUM }}</span>
+    </a>
+    <a href="{{ url_for('vulnerabilities.index', severity='LOW') }}" class="btn btn-sm {% if active_filter == 'LOW' %}btn-success{% else %}btn-cyber-outline text-success border-success{% endif %}">
+        Low <span class="badge bg-dark ms-1">{{ counts.LOW }}</span>
+    </a>
+</div>
+
+<!-- Vulnerabilities Findings Table -->
+<div class="cyber-card">
+    <div class="cyber-card-header">
+        <div class="text-white fw-semibold small font-monospace">
+            <i class="bi bi-shield-slash-fill text-warning me-2"></i>SECURITY AUDIT FINDINGS ({{ findings|length }} items)
+        </div>
+    </div>
+    <div class="cyber-card-body p-0">
+        <div class="table-responsive">
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th>Vulnerability</th>
+                        <th>Target Device</th>
+                        <th>Severity</th>
+                        <th>Impact Score</th>
+                        <th>Observed Evidence</th>
+                        <th>Recommendation</th>
+                        <th>Detected Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if findings %}
+                        {% for f in findings %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-white">{{ f.vuln_name }}</div>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('bluetooth.device_details', device_id=f.device.id) }}" class="text-info text-decoration-none fw-medium">
+                                    {{ f.device.name }}
+                                </a>
+                                <div class="font-monospace text-muted small">{{ f.device.mac_address }}</div>
+                            </td>
+                            <td>
+                                <span class="{{ f.severity_badge_class }}">{{ f.severity }}</span>
+                            </td>
+                            <td>
+                                <span class="font-monospace text-warning fw-bold">+{{ f.finding_score|round(1) }} pts</span>
+                            </td>
+                            <td>
+                                <div class="small font-monospace text-light" style="max-width: 260px;">
+                                    {{ f.evidence }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small text-muted" style="max-width: 280px;">
+                                    <i class="bi bi-shield-check text-success me-1"></i>{{ f.recommendation }}
+                                </div>
+                            </td>
+                            <td class="font-monospace small text-muted">
+                                {{ f.timestamp.strftime('%Y-%m-%d %H:%M') if f.timestamp else 'N/A' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-check-circle fs-2 text-success mb-2 d-block"></i>
+                                No vulnerability findings matching filter: <b>{{ active_filter }}</b>.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

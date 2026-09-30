@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Analyst Authentication | Bluetooth Security Platform{% endblock %}
+
+{% block auth_content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="text-center mb-4">
+            <div class="brand-icon mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.8rem;">
+                <i class="bi bi-bluetooth"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-1">Cybersecurity Portal</h4>
+            <p class="text-muted small">Bluetooth Vulnerability Assessment & Simulation Platform</p>
+        </div>
+
+        <div class="cyber-card p-4">
+            <h5 class="text-white mb-3 text-center">Analyst Login</h5>
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="mb-3">
+                    <label class="form-label text-light small">Analyst Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-person"></i></span>
+                        <input type="text" name="username" class="form-control cyber-input" placeholder="e.g. admin" required autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-light small">Secure Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-key"></i></span>
+                        <input type="password" name="password" class="form-control cyber-input" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-cyber-primary w-100 py-2 mt-2">
+                    <i class="bi bi-shield-lock me-2"></i>Authenticate Session
+                </button>
+            </form>
+
+            <div class="alert alert-dark border-secondary-subtle mt-4 mb-0 py-2 px-3 small">
+                <div class="text-info fw-bold mb-1"><i class="bi bi-info-circle me-1"></i>Pre-Configured Demo Credentials:</div>
+                <div class="font-monospace text-muted">Username: <span class="text-white">admin</span></div>
+                <div class="font-monospace text-muted">Password: <span class="text-white">Admin@12345</span></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <span class="text-muted small">Don't have an analyst profile?</span>
+            <a href="{{ url_for('auth.register') }}" class="text-info small fw-medium ms-1">Register Access</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ device.name }} | Device Details{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pb-3 mb-4 border-bottom border-secondary-subtle gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h4 class="text-white fw-bold mb-0">{{ device.name }}</h4>
+            {% if device.is_demo %}
+                <span class="badge bg-info text-dark font-monospace">DEMO MODE — SAMPLE DATA</span>
+            {% endif %}
+        </div>
+        <div class="font-monospace text-muted small">MAC IDENTIFIER: <span class="text-info">{{ device.mac_address }}</span> &bull; VENDOR: {{ device.vendor }}</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-cyber-primary" id="audit-btn-{{ device.id }}" onclick="runDeviceSecurityScan({{ device.id }})">
+            <i class="bi bi-shield-check me-2"></i>Run Security Audit
+        </button>
+        <a href="{{ url_for('simulation.index', device_id=device.id) }}" class="btn btn-cyber-outline">
+            <i class="bi bi-cpu me-1"></i>Launch Simulation
+        </a>
+        <button class="btn btn-cyber-outline" onclick="generateDeviceReport({{ device.id }})">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Generate PDF Report
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Specs & Risk Engine Breakdown -->
+    <div class="col-lg-4">
+        <!-- Device Specs Card -->
+        <div class="cyber-card mb-4">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-info-circle-fill text-info me-2"></i>DEVICE PROFILE
+                </div>
+            </div>
+            <div class="cyber-card-body">
+                <ul class="list-group list-group-flush bg-transparent">
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">Target Name</span>
+                        <span class="text-white fw-medium small">{{ device.name }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">MAC Address</span>
+                        <span class="font-monospace text-info small">{{ device.mac_address }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">Device Category</span>
+                        <span class="text-light small">{{ device.device_type }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">Signal Strength (RSSI)</span>
+                        <span class="font-monospace text-light small">{{ device.rssi }} dBm</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">Audit Status</span>
+                        <span class="badge bg-dark border border-secondary">{{ device.status }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary-subtle d-flex justify-content-between px-0 py-2">
+                        <span class="text-muted small">Last Activity</span>
+                        <span class="font-monospace text-muted small">{{ device.last_seen.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Transparent Risk Engine Score Card -->
+        <div class="cyber-card mb-4">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-calculator-fill text-info me-2"></i>TRANSPARENT RISK SCORE
+                </div>
+            </div>
+            <div class="cyber-card-body text-center py-4">
+                <div class="display-4 fw-bold mb-1" style="color: {{ risk_eval.color_hex }};">
+                    {{ risk_eval.normalized_score }}%
+                </div>
+                <div class="badge {{ risk_eval.badge_class }} fs-6 px-3 py-1 mb-3">
+                    {{ risk_eval.risk_level }}
+                </div>
+                <p class="text-muted small mb-3">{{ risk_eval.summary_text }}</p>
+
+                <!-- Progress Bar -->
+                <div class="progress bg-dark border border-secondary mb-3" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ risk_eval.normalized_score }}%; background-color: {{ risk_eval.color_hex }};"></div>
+                </div>
+
+                <!-- Formula Breakdown Explanation -->
+                <div class="alert alert-dark border-secondary-subtle text-start p-3 small mb-0">
+                    <div class="text-info fw-bold mb-1"><i class="bi bi-lightbulb me-1"></i>Deterministic Formula:</div>
+                    <div class="font-monospace text-muted" style="font-size: 0.78rem;">
+                        {{ risk_eval.formula_breakdown }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advertised Services Card -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-diagram-3-fill text-info me-2"></i>ADVERTISED SERVICES
+                </div>
+            </div>
+            <div class="cyber-card-body">
+                {% if device.services %}
+                    <ul class="list-unstyled mb-0">
+                        {% for svc in device.services %}
+                        <li class="mb-2 p-2 bg-dark rounded border border-secondary-subtle small font-monospace text-light">
+                            <i class="bi bi-chevron-right text-info me-1"></i>{{ svc }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted small mb-0">No service records advertised in public frames.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Security Findings & Scan History -->
+    <div class="col-lg-8">
+        <!-- Security Findings Card -->
+        <div class="cyber-card mb-4">
+            <div class="cyber-card-header d-flex align-items-center justify-content-between">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-shield-slash-fill text-warning me-2"></i>SECURITY AUDIT FINDINGS ({{ findings|length }})
+                </div>
+            </div>
+            <div class="cyber-card-body p-0">
+                {% if findings %}
+                    <div class="accordion accordion-flush" id="findingsAccordion">
+                        {% for f in findings %}
+                        <div class="accordion-item bg-transparent border-secondary-subtle">
+                            <h2 class="accordion-header" id="heading-{{ f.id }}">
+                                <button class="accordion-button collapsed bg-transparent text-white py-3 px-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ f.id }}">
+                                    <div class="d-flex align-items-center justify-content-between w-100 me-3">
+                                        <div class="fw-semibold">{{ f.vuln_name }}</div>
+                                        <span class="{{ f.severity_badge_class }}">{{ f.severity }}</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ f.id }}" class="accordion-collapse collapse" data-bs-parent="#findingsAccordion">
+                                <div class="accordion-body px-4 py-3 bg-dark-subtle border-top border-secondary-subtle">
+                                    <div class="mb-2">
+                                        <div class="text-muted small text-uppercase font-monospace fw-semibold">Evidence Observed:</div>
+                                        <div class="font-monospace text-info small bg-dark p-2 rounded border border-secondary mt-1">
+                                            {{ f.evidence }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small text-uppercase font-monospace fw-semibold">Remediation Guideline:</div>
+                                        <div class="text-light small mt-1">
+                                            <i class="bi bi-check-circle-fill text-success me-1"></i>{{ f.recommendation }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-shield-check fs-2 text-success mb-2 d-block"></i>
+                        No active security vulnerabilities identified. Click <b>"Run Security Audit"</b> to evaluate.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Scan History Table -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <div class="text-white fw-semibold small font-monospace">
+                    <i class="bi bi-clock-history text-info me-2"></i>ASSESSMENT AUDIT HISTORY
+                </div>
+            </div>
+            <div class="cyber-card-body p-0">
+                <div class="table-responsive">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Scan Type</th>
+                                <th>Risk Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if scans %}
+                                {% for s in scans %}
+                                <tr>
+                                    <td class="font-monospace small text-muted">{{ s.scan_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td><span class="badge bg-dark border border-secondary">{{ s.scan_type }}</span></td>
+                                    <td><span class="badge {{ device.risk_badge_class }}">{{ s.risk_score|round(1) }}%</span></td>
+                                    <td><span class="text-success small font-monospace"><i class="bi bi-check-all me-1"></i>{{ s.status }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No historical scans recorded.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<script>
+function generateDeviceReport(deviceId) {
+    fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = data.download_url;
+        } else {
+            alert('PDF generation error: ' + (data.message || 'Unknown'));
+        }
+    })
+    .catch(err => {
+        alert('Report request error: ' + err.message);
+    });
+}
+</script>
+{% endblock %}

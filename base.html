@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bluetooth Security Assessment & Simulation Platform{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Dark Cybersecurity Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if session.get('user_id') %}
+<div class="app-wrapper">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="appSidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="bi bi-bluetooth"></i>
+            </div>
+            <div>
+                <div class="brand-title">BT-AUDIT SEC</div>
+                <div class="brand-subtitle">CYBERSECURITY PLATFORM</div>
+            </div>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="nav-category">Core Operations</li>
+            <li class="nav-item">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('bluetooth.devices') }}" class="nav-link {% if 'bluetooth' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>Bluetooth Devices</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('vulnerabilities.index') }}" class="nav-link {% if 'vulnerabilities' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-shield-slash"></i>
+                    <span>Vulnerability Assessment</span>
+                </a>
+            </li>
+
+            <li class="nav-category">Simulation & Reporting</li>
+            <li class="nav-item">
+                <a href="{{ url_for('simulation.index') }}" class="nav-link {% if 'simulation' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-cpu"></i>
+                    <span>Exploitation Simulator</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('reports.index') }}" class="nav-link {% if 'reports' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>Audit Reports</span>
+                </a>
+            </li>
+
+            <li class="nav-category">Account</li>
+            <li class="nav-item">
+                <a href="{{ url_for('auth.logout') }}" class="nav-link text-danger">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-success" style="width: 10px; height: 10px;"></div>
+                <div class="small text-muted font-monospace">STATUS: ARMED (SAFE)</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Container -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-cyber-outline d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="fw-semibold text-white d-none d-sm-block">
+                    Bluetooth Security Vulnerability Assessment & Exploitation Simulator
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-info text-dark font-monospace px-2 py-1">
+                    <i class="bi bi-shield-lock-fill me-1"></i>DEMO ENVIRONMENT READY
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span class="text-light small fw-medium">{{ session.get('username', 'Analyst') }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        <div class="container-fluid px-4 pt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show cyber-card py-2 px-3 mb-3" role="alert">
+                            <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Page Body Content -->
+        <main class="container-fluid px-4 py-3 flex-grow-1">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-3 border-top border-secondary-subtle text-muted small">
+            Bluetooth Security Vulnerability Assessment and Exploitation Simulator &bull; Academic Final-Year Project &bull; SIMULATION ONLY
+        </footer>
+    </div>
+</div>
+
+<!-- Global Bluetooth Radar Scan Modal -->
+<div class="modal fade" id="scanModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cyber-card">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-info font-monospace"><i class="bi bi-broadcast me-2"></i>Bluetooth Spectrum Sniffer</h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="radar-wrapper">
+                    <div class="radar-ring r1"></div>
+                    <div class="radar-ring r2"></div>
+                    <div class="radar-sweep"></div>
+                </div>
+                <h6 class="text-light mt-3">Performing Safe Passive Discovery...</h6>
+                <p class="text-muted small mb-0">Listening for General Discoverable advertising frames on standard 2.4 GHz channels.</p>
+                <div class="text-warning small font-monospace mt-2">SAFE PASSIVE MODE &bull; NO INTRUSIVE PACKETS</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Public Unauthenticated Wrapper (Login / Register / Errors) -->
+<div class="container py-5 min-vh-100 d-flex flex-column justify-content-center">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row justify-content-center mb-3">
+                <div class="col-md-5">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show cyber-card py-2 px-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if error_title %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="cyber-card p-5">
+                <i class="bi bi-exclamation-triangle-fill text-warning display-3 mb-3"></i>
+                <h3 class="text-white">{{ error_title }}</h3>
+                <p class="text-muted">{{ error_message }}</p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-cyber-primary mt-3">Return to Safety</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const appSidebar = document.getElementById('appSidebar');
+    if (sidebarToggle && appSidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            appSidebar.classList.toggle('show');
+        });
+    }
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
